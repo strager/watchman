@@ -44,8 +44,8 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
                     self.assertWatchSucceeds(client, d)
                     self.assertWatchProjectSucceeds(client, d)
                 else:
-                    self.assertWatchIsRestricted(client, d)
-                    self.assertWatchProjectIsRestricted(client, d)
+                    self.assertWatchIsRestricted(inst, client, d)
+                    self.assertWatchProjectIsRestricted(inst, client, d)
 
     def assertWatchSucceeds(self, client, path):
         client.query("watch", path)
@@ -53,7 +53,7 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
     def assertWatchProjectSucceeds(self, client, path):
         client.query("watch-project", path)
 
-    def assertWatchIsRestricted(self, client, path):
+    def assertWatchIsRestricted(self, inst, client, path):
         with self.assertRaises(pywatchman.WatchmanError) as ctx:
             client.query("watch", path)
         message = str(ctx.exception)
@@ -70,10 +70,7 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
             + "and enforce_root_files is set to true.",
             message,
         )
-        self.assertRegex(
-            message,
-            "root_files is defined by the `.*?` config file",
-        )
+        self.assertIn("root_files is defined by the `{}` config file".format(inst.cfg_file), message) # @nocommit
         self.assertIn(
             "config file and includes `.watchmanconfig`, `.git`, and `.foo`.",
             message,
@@ -85,7 +82,7 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
             message,
         )
 
-    def assertWatchProjectIsRestricted(self, client, path):
+    def assertWatchProjectIsRestricted(self, inst, client, path):
         with self.assertRaises(pywatchman.WatchmanError) as ctx:
             client.query("watch-project", path)
         message = str(ctx.exception)
@@ -96,9 +93,10 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
             ).format(path),
             message,
         )
-        self.assertRegex(
+        self.assertIn(
+            "root_files is defined by the `{}` config file"
+                .format(inst.cfg_file),
             message,
-            "root_files is defined by the `.*` config file",
         )
         self.assertIn(
             "config file and includes `.watchmanconfig`, `.git`, and `.foo`.",
