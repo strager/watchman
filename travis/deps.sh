@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/nix/store/r8bx3qf1bpncb14i9gzma4vr089pc3pv-bash-4.4-p19/bin/bash
 set -x
 set -e
 set -u

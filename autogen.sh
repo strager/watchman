@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/nix/store/r8bx3qf1bpncb14i9gzma4vr089pc3pv-bash-4.4-p19/bin/bash -e
 # vim:ts=2:sw=2:et:
 if test -d autom4te.cache ; then
   rm -rf autom4te.cache
