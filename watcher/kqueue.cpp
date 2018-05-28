@@ -82,7 +82,8 @@ bool KQueueWatcher::startWatchFile(struct watchman_file* file) {
 
   w_log(W_LOG_DBG, "watch_file(%s)\n", full_name.c_str());
 
-  FileDescriptor fdHolder(open(full_name.c_str(), O_EVTONLY | O_CLOEXEC));
+  FileDescriptor fdHolder(
+      open(full_name.c_str(), O_EVTONLY | O_CLOEXEC | O_SYMLINK));
 
   auto rawFd = fdHolder.fd();
 
