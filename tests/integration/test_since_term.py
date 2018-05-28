@@ -70,7 +70,7 @@ class TestSinceTerm(WatchmanTestCase.WatchmanTestCase):
         self.assertFileListsEqual(res["files"], [])
 
         future = base_mtime + 15
-        self.touch(os.path.join(root, "foo.c"), (future, future))
+        os.utime(os.path.join(root, "foo.c"), (future, future))
 
         # Try again with a clock
         res = self.watchmanCommand(

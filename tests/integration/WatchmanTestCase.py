@@ -198,20 +198,21 @@ class WatchmanTestCase(unittest.TestCase):
         fname = os.path.join(base, *fname)
         os.remove(fname)
 
-    def touch(self, fname, times=None):
+    def touch(self, fname):
         try:
-            os.utime(fname, times)
+            os.utime(fname, None)
         except OSError as e:
             if e.errno == errno.ENOENT:
                 with open(fname, "a"):
-                    time.sleep(0.5)
-                    os.utime(fname, times)
+                    #time.sleep(1)
+                    os.utime(fname, None)
+                    pass
             else:
                 raise
 
     def touchRelative(self, base, *fname):
         fname = os.path.join(base, *fname)
-        self.touch(fname, None)
+        self.touch(fname)
 
     def __clearWatches(self):
         if hasattr(self, "client"):

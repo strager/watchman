@@ -40,7 +40,7 @@ class AsyncWatchmanTestCase(unittest.TestCase):
 
     def touch_relative(self, base, *fname):
         fname = os.path.join(base, *fname)
-        self.touch(fname, None)
+        self.touch(fname)
 
     def watchman_command(self, *args):
 
