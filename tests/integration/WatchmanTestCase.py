@@ -204,7 +204,7 @@ class WatchmanTestCase(unittest.TestCase):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 with open(fname, "a"):
-                    #time.sleep(1)
+                    time.sleep(1)
                     pass
             else:
                 raise
@@ -317,6 +317,7 @@ class WatchmanTestCase(unittest.TestCase):
     def assertFileListsEqual(self, list1, list2, message=None):
         list1 = [self.normRelativePath(f) for f in list1]
         list2 = [self.normRelativePath(f) for f in list2]
+        print(str(list1), str(list2))
         self.assertCountEqual(list1, list2, message)
 
     def fileListsEqual(self, list1, list2):
