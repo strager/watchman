@@ -205,7 +205,6 @@ class WatchmanTestCase(unittest.TestCase):
             if e.errno == errno.ENOENT:
                 with open(fname, "a"):
                     #time.sleep(1)
-                    os.utime(fname, None)
                     pass
             else:
                 raise

@@ -54,8 +54,8 @@ class TestSince(WatchmanTestCase.WatchmanTestCase):
 
         # now check the delta for the since
         expected = ["foo/bar", "foo/bar/222"]
-        if watch["watcher"] in ("portfs", "kqueue"):
-            # These systems also show the containing dir as modified
+        if watch["watcher"] == "portfs":
+            # This system also show the containing dir as modified
             expected.append("foo")
         self.assertFileList(root, cursor="n:foo", files=expected)
 
