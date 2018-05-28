@@ -204,6 +204,7 @@ class WatchmanTestCase(unittest.TestCase):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 with open(fname, "a"):
+                    time.sleep(0.5)
                     os.utime(fname, times)
             else:
                 raise
