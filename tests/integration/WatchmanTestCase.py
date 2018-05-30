@@ -296,9 +296,6 @@ class WatchmanTestCase(unittest.TestCase):
         self.last_root_list = watch_list
         return watch_list
 
-    def normFileList(self, files):
-        return sorted(list(map(norm_relative_path, files)))
-
     def assertFileListsEqual(self, list1, list2, message=None):
         list1 = [norm_relative_path(f) for f in list1]
         list2 = [norm_relative_path(f) for f in list2]
@@ -389,13 +386,6 @@ class WatchmanTestCase(unittest.TestCase):
             return sub
 
         return list(map(norm_sub, data))
-
-    def findSubscriptionContainingFile(self, subdata, filename):
-        filename = norm_relative_path(filename)
-        for dat in subdata:
-            if "files" in dat and filename in self.normFileList(dat["files"]):
-                return dat
-        return None
 
     def isCaseInsensitive(self):
         if hasattr(self, "_case_insensitive"):
