@@ -48,5 +48,5 @@ class TestFSEventsResync(WatchmanTestCase.WatchmanTestCase):
         self.assertFalse(res["is_fresh_instance"], res)
         self.assertTrue("warning" not in res, res)
         self.assertEqual(
-            self.normWatchmanFileList(res["files"]), self.normFileList(["222"])
+            self.normFileList(res["files"]), self.normFileList(["222"])
         )

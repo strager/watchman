@@ -278,7 +278,7 @@ class WatchmanTestCase(unittest.TestCase):
         if relativeRoot:
             expr["relative_root"] = relativeRoot
         res = self.watchmanCommand("query", root, expr)
-        files = self.normWatchmanFileList(res["files"])
+        files = self.normFileList(res["files"])
         self.last_file_list = files
         return files
 
@@ -295,9 +295,6 @@ class WatchmanTestCase(unittest.TestCase):
         watch_list = self.watchmanCommand("watch-list")["roots"]
         self.last_root_list = watch_list
         return watch_list
-
-    def normWatchmanFileList(self, files):
-        return sorted(list(map(norm_relative_path, files)))
 
     def normFileList(self, files):
         return sorted(list(map(norm_relative_path, files)))
@@ -397,7 +394,7 @@ class WatchmanTestCase(unittest.TestCase):
     def findSubscriptionContainingFile(self, subdata, filename):
         filename = norm_relative_path(filename)
         for dat in subdata:
-            if "files" in dat and filename in self.normWatchmanFileList(dat["files"]):
+            if "files" in dat and filename in self.normFileList(dat["files"]):
                 return dat
         return None
 
