@@ -1,5 +1,7 @@
 #!/bin/bash
 set -x
+set -e
+set -u
 
 brew_install_latest_stable() {
   local packages=("${@}")
@@ -58,7 +60,7 @@ case `uname` in
     HOMEBREW_NO_AUTO_UPDATE=1 brew_install_latest_stable cmake wget pcre ruby openssl readline pyenv
     # avoid snafu with OS X and python builds
     ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
-    CFLAGS="$CFLAGS $ARCHFLAGS"
+    CFLAGS="${CFLAGS:-} $ARCHFLAGS"
     export ARCHFLAGS CFLAGS
     case "$TRAVIS_PYTHON" in
       python2.6)
