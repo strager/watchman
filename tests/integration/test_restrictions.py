@@ -42,11 +42,16 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
 
                 if expect_pass:
                     self.assertWatchSucceeds(client, d)
+                    self.assertWatchProjectSucceeds(client, d)
                 else:
                     self.assertWatchIsRestricted(client, d)
+                    self.assertWatchProjectIsRestricted(client, d)
 
     def assertWatchSucceeds(self, client, path):
         client.query("watch", path)
+
+    def assertWatchProjectSucceeds(self, client, path):
+        client.query("watch-project", path)
 
     def assertWatchIsRestricted(self, client, path):
         with self.assertRaises(pywatchman.WatchmanError) as ctx:
@@ -76,6 +81,32 @@ class TestWatchRestrictions(WatchmanTestCase.WatchmanTestCase):
         self.assertIn(
             "One or more of these files must be present in order to allow a "
             + "watch.  Try pulling and checking out a newer version of the "
+            + "project?",
+            message,
+        )
+
+    def assertWatchProjectIsRestricted(self, client, path):
+        with self.assertRaises(pywatchman.WatchmanError) as ctx:
+            client.query("watch-project", path)
+        message = str(ctx.exception)
+        self.assertIn(
+            (
+                "None of the files listed in global config root_files are "
+                + "present in path `{}` or any of its parent directories."
+            ).format(path),
+            message,
+        )
+        self.assertRegex(
+            message,
+            "root_files is defined by the `.*` config file",
+        )
+        self.assertIn(
+            "config file and includes `.watchmanconfig`, `.git`, and `.foo`.",
+            message,
+        )
+        self.assertIn(
+            "One or more of these files must be present in order to allow a "
+            + "watch. Try pulling and checking out a newer version of the "
             + "project?",
             message,
         )
