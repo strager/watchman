@@ -7,6 +7,10 @@
 
 namespace watchman {
 
+const char* CookieSyncAborted::what() const noexcept {
+    return "Cookie sync aborted";
+}
+
 CookieSync::Cookie::Cookie(w_string name) : fileName(name) {}
 
 CookieSync::Cookie::~Cookie() {

@@ -7,7 +7,10 @@
 
 namespace watchman {
 
-class CookieSyncAborted : public std::exception {};
+class CookieSyncAborted : public std::exception {
+public:
+  const char* what() const noexcept override;
+};
 
 class CookieSync {
  public:
