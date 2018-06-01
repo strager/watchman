@@ -61,6 +61,23 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
 
         self.assertWaitForEqual(states, getStates)
 
+    def test_state_enter_leave_one(self):
+        root = self.mkdtemp()
+        self.watchmanCommand("watch", root)
+        result = self.watchmanCommand("debug-get-asserted-states", root)
+        self.assertEqual([], result["states"])
+
+        self.watchmanCommand("state-enter", root, "teststate")
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "teststate", "state": "Asserted"},
+            ],
+        )
+
+        self.watchmanCommand("state-leave", root, "teststate")
+        self.assertWaitForAssertedStates(root, [])
+
     def test_state_enter_leave(self):
         root = self.mkdtemp()
         self.watchmanCommand("watch", root)
