@@ -8,6 +8,7 @@
 #include <mutex>
 #include <vector>
 #include "Result.h"
+#include "Logging.h"
 
 namespace watchman {
 
@@ -138,6 +139,7 @@ class WaitableResult : public std::enable_shared_from_this<WaitableResult<T>> {
           condition_.notify_all();
           return;
         } catch (const std::exception& exc) {
+          log(DBG, "strager: saw an exception 2: %s", exc.what());
           // We get here if executor_->run() threw an exception.
           // This is most likely to happen if the thread pool is
           // full, but we can't make any assumptions of the nature
@@ -314,6 +316,7 @@ class Future {
           state->promise.setResult(std::move(res2));
         });
       } catch (const std::exception& exc) {
+        log(DBG, "strager: saw an exception 1: %s", exc.what());
         state->promise.setException(std::current_exception());
       }
     });
@@ -388,6 +391,14 @@ class Promise {
   // notified/dispatched.
   // It is an error fulfill the same promise multiple times.
   void setException(std::exception_ptr exc) {
+    log(DBG, "strager: saw an exception 3");
+    try {
+      std::rethrow_exception(exc);
+    } catch (std::exception &e) {
+      log(DBG, "strager: saw an exception 4: %s", e.what());
+    } catch (...) {
+      log(DBG, "strager: saw an exception 5");
+    }
     setResult(Result<T>(exc));
   }
 

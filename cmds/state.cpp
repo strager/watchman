@@ -178,10 +178,12 @@ static void cmd_state_enter(
   auto root = resolveRoot(client, args);
 
   if (!parse_state_arg(client, args, &parsed)) {
+    log(DBG, "failed to parse state arg");
     return;
   }
 
   if (client->states.find(parsed.name) != client->states.end()) {
+    log(DBG, "state already asserted");
     send_error_response(
         client, "state %s is already asserted", parsed.name.c_str());
     return;
