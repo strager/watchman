@@ -153,6 +153,9 @@ struct InMemoryView : public QueryableView {
       int flags,
       const watchman_dir_ent* pre_stat);
 
+  void clearCookiesAfterInitialCrawl(w_root_t &);
+  void clearCookiesAfterFullRecrawl(w_root_t &);
+
   /** Updates the otime for the file and bubbles it to the front of recency
    * index */
   void markFileChanged(

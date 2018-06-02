@@ -3,6 +3,7 @@
 
 #include "watchman.h"
 #include "InMemoryView.h"
+#include "Logging.h"
 
 namespace watchman {
 
@@ -59,6 +60,7 @@ void InMemoryView::fullCrawl(
         ;
       }
     }
+    bool isInitialCrawl = !root->inner.done_initial; // @nocommit is this always true?
     {
       auto lockPair = acquireLockedPair(root->recrawlInfo, crawlState_);
       lockPair.first->shouldRecrawl = false;
@@ -68,7 +70,15 @@ void InMemoryView::fullCrawl(
       }
       root->inner.done_initial = true;
     }
-    root->cookies.abortAllCookies();
+    // @nocommit This condition is incorrect. I think what
+    // matters is whether this is the first time we've
+    // crawled the cookie's directory (e.g. after rmdir &&
+    // mkdir).
+    if (isInitialCrawl) {
+      clearCookiesAfterInitialCrawl(*root);
+    } else {
+      clearCookiesAfterFullRecrawl(*root);
+    }
   }
   sample.add_root_meta(root);
 
@@ -215,6 +225,14 @@ void InMemoryView::ioThread(const std::shared_ptr<w_root_t>& root) {
   }
 }
 
+void InMemoryView::clearCookiesAfterInitialCrawl(w_root_t &root) {
+  root.cookies.notifyAllCookies();
+}
+
+void InMemoryView::clearCookiesAfterFullRecrawl(w_root_t &root) {
+  root.cookies.abortAllCookies();
+}
+
 void InMemoryView::processPath(
     const std::shared_ptr<w_root_t>& root,
     SyncView::LockedPtr& view,
@@ -242,6 +260,7 @@ void InMemoryView::processPath(
         (watcher_->flags & WATCHER_HAS_PER_FILE_NOTIFICATIONS)
         ? ((flags & W_PENDING_VIA_NOTIFY) || !root->inner.done_initial)
         : true;
+    log(DBG, "strager: consider_cookie=", consider_cookie, " flags&W_PENDING_VIA_NOTIFY=", (flags&W_PENDING_VIA_NOTIFY), " root->inner.done_initial=", root->inner.done_initial, "\n");
 
     if (consider_cookie) {
       cookies_.notifyCookie(full_path);
