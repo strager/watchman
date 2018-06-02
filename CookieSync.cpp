@@ -113,14 +113,6 @@ void CookieSync::syncToNow(std::chrono::milliseconds timeout) {
 }
 
 void CookieSync::abortAllCookies() {
-  log(DBG, "strager: abortAllCookies\n");
-  void *backtrace_frames[10];
-  size_t backtrace_size = backtrace(backtrace_frames, sizeof(backtrace_frames) / sizeof(*backtrace_frames));
-  char **backtrace_frame_symbols = backtrace_symbols(backtrace_frames, backtrace_size);
-  for (size_t i = 0; i < backtrace_size; ++i) {
-      log(DBG, "strager: frame ", i, ": ", backtrace_frame_symbols[i], " (", backtrace_frames[i], ")\n");
-  }
-
   std::unordered_map<w_string, std::unique_ptr<Cookie>> cookies;
 
   {
