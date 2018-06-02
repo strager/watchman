@@ -159,21 +159,4 @@ void CookieSync::notifyCookie(const w_string& path) {
     // cookie file will be unlinked when we exit this scope
   }
 }
-
-void CookieSync::notifyAllCookies() {
-  // @nocommit factor into a function
-  std::unordered_map<w_string, std::unique_ptr<Cookie>> cookies;
-
-  {
-    auto map = cookies_.wlock();
-    std::swap(*map, cookies);
-  }
-
-  for (auto& it : cookies) {
-    Cookie& cookie = *it.second;
-    cookie.promise.setValue(Unit{});
-  }
-
-  // cookie files will be unlinked when we exit this scope
-}
 }

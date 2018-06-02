@@ -48,8 +48,6 @@ class CookieSync {
    */
   void notifyCookie(const w_string& path);
 
-  void notifyAllCookies();
-
   /* Cause all pending cookie sync promises to complete immediately
    * with a CookieSyncAborted exception */
   void abortAllCookies();
