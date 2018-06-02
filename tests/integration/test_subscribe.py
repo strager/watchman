@@ -51,7 +51,7 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
             We sort by name and rely on the sort being stable as the
             relative ordering of the potentially multiple queueued
             entries per name is important to preserve """
-            return sorted(states)
+            return sorted(states, key=lambda x: x["name"])
 
         states = sortStates(states)
 
@@ -68,7 +68,12 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         self.assertEqual([], result["states"])
 
         self.watchmanCommand("state-enter", root, "teststate")
-        self.assertWaitForAssertedStates(root, ["teststate"])
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "teststate", "state": "Asserted"},
+            ],
+        )
 
         self.watchmanCommand("state-leave", root, "teststate")
         self.assertWaitForAssertedStates(root, [])
@@ -79,15 +84,21 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         result = self.watchmanCommand("debug-get-asserted-states", root)
         self.assertEqual([], result["states"])
 
-        self.watchmanCommand('state-enter', root, 'foo')
-        self.watchmanCommand('state-enter', root, 'bar')
-        result = self.watchmanCommand('debug-get-asserted-states', root)
-        self.assertEqual(['bar', 'foo'], sorted(result['states']))
+        self.watchmanCommand("state-enter", root, "foo")
+        self.watchmanCommand("state-enter", root, "bar")
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "bar", "state": "Asserted"},
+                {"name": "foo", "state": "Asserted"},
+            ],
+        )
 
-        self.watchmanCommand('state-leave', root, 'foo')
-        self.watchmanCommand('state-leave', root, 'bar')
-        result = self.watchmanCommand('debug-get-asserted-states', root)
-        self.assertEqual([], result['states'])
+        self.watchmanCommand("state-leave", root, "foo")
+        self.assertWaitForAssertedStates(root, [{"name": "bar", "state": "Asserted"}])
+
+        self.watchmanCommand("state-leave", root, "bar")
+        self.assertWaitForAssertedStates(root, [])
 
     def test_defer_state(self):
         root = self.mkdtemp()
