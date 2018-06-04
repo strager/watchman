@@ -75,7 +75,11 @@ class WatchmanTestCase(unittest.TestCase):
         return False
 
     def checkPersistentSession(self):
-        if self.requiresPersistentSession() and self.transport == "cli":
+        if self.requiresPersistentSession():
+            self.skipUnlessPersistentSession()
+
+    def skipUnlessPersistentSession(self):
+        if self.transport == "cli":
             self.skipTest("need persistent session")
 
     def checkOSApplicability(self):
@@ -204,7 +208,7 @@ class WatchmanTestCase(unittest.TestCase):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 with open(fname, "a"):
-                    time.sleep(1)
+                    #time.sleep(1)
                     pass
             else:
                 raise

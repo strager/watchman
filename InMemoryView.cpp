@@ -654,6 +654,7 @@ void InMemoryView::signalThreads() {
   stopThreads_ = true;
   watcher_->signalThreads();
   pending_.ping();
+  // @nocommit signal pauseNotifyThreadsConditionVariable
 }
 
 void InMemoryView::wakeThreads() {

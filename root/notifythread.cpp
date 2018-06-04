@@ -3,8 +3,16 @@
 
 #include "watchman.h"
 #include "InMemoryView.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace watchman {
+
+namespace {
+std::atomic<bool> shouldPauseNotifyThreads{false};
+std::mutex pauseNotifyThreadsMutex;
+std::condition_variable pauseNotifyThreadsConditionVariable;
+}
 
 // we want to consume inotify events as quickly as possible
 // to minimize the risk that the kernel event buffer overflows,
@@ -33,6 +41,7 @@ void InMemoryView::notifyThread(const std::shared_ptr<w_root_t>& root) {
     // big number because not all watchers can deal with
     // -1 meaning infinite wait at the moment
     if (watcher_->waitNotify(86400)) {
+      debugWaitForUnpauseNotifyThreads(); // @nocommit rename
       while (watcher_->consumeNotify(root, localLock)) {
         if (localLock->size() >= WATCHMAN_BATCH_LIMIT) {
           break;
@@ -47,6 +56,26 @@ void InMemoryView::notifyThread(const std::shared_ptr<w_root_t>& root) {
         lock->ping();
       }
     }
+  }
+}
+
+void InMemoryView::debugPauseNotifyThreads() {
+  std::lock_guard<std::mutex> lock{pauseNotifyThreadsMutex};
+  shouldPauseNotifyThreads.store(true /*,@nocommit*/);
+}
+
+void InMemoryView::debugUnpauseNotifyThreads() {
+  std::lock_guard<std::mutex> lock{pauseNotifyThreadsMutex};
+  shouldPauseNotifyThreads.store(false /*,@nocommit*/);
+  pauseNotifyThreadsConditionVariable.notify_all();
+}
+
+void InMemoryView::debugWaitForUnpauseNotifyThreads() {
+  if (shouldPauseNotifyThreads.load(/*@nocommit*/)) {
+    std::unique_lock<std::mutex> lock{pauseNotifyThreadsMutex};
+    pauseNotifyThreadsConditionVariable.wait(lock, []() {
+      return !shouldPauseNotifyThreads;
+    });
   }
 }
 }

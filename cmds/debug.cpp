@@ -2,6 +2,7 @@
  * Licensed under the Apache License, Version 2.0 */
 
 #include "watchman.h"
+#include "InMemoryView.h"
 
 static void cmd_debug_recrawl(
     struct watchman_client* client,
@@ -199,6 +200,36 @@ W_CMD_REG(
     cmd_debug_get_asserted_states,
     CMD_DAEMON,
     w_cmd_realpath_root)
+
+static void cmd_debug_pause_watchers(
+    struct watchman_client* clientbase,
+    const json_ref&) {
+  watchman::InMemoryView::debugPauseNotifyThreads();
+  // @nocommit should we block waiting for the watchers to
+  // ack?
+  auto response = make_response();
+  response.set("pause", json_true()); // @nocommit untested
+  send_and_dispose_response(clientbase, std::move(response));
+}
+W_CMD_REG(
+    "debug-pause-watchers",
+    cmd_debug_pause_watchers,
+    CMD_DAEMON,
+    nullptr)
+
+static void cmd_debug_unpause_watchers(
+    struct watchman_client* clientbase,
+    const json_ref&) {
+  watchman::InMemoryView::debugUnpauseNotifyThreads();
+  auto response = make_response();
+  response.set("unpause", json_true()); // @nocommit untested
+  send_and_dispose_response(clientbase, std::move(response));
+}
+W_CMD_REG(
+    "debug-unpause-watchers",
+    cmd_debug_unpause_watchers,
+    CMD_DAEMON,
+    nullptr)
 
 /* vim:ts=2:sw=2:et:
  */

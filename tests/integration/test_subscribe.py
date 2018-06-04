@@ -107,9 +107,11 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         should still be broadcast.
         """
         root = self.mkdtemp()
+        self.pauseWatchers()
         self.watchmanCommand("watch", root)
 
         self.watchmanCommand("state-enter", root, "teststate")
+        self.unpauseWatchers()
         # @nocommit how can we tickle the cookies into being aborted? can we
         # pause inotify?
         self.assertWaitForAssertedStates(
@@ -142,6 +144,22 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
             ],
         )
         # @nocommit how can we verify that only one cookie was created?
+
+    # @nocommit deduplicate
+    def pauseWatchers(self):
+        self.watchmanCommand("debug-pause-watchers")
+        # @nocommit we need to wait for ack from watchers...
+        import time
+        time.sleep(0.1)
+
+    # @nocommit deduplicate
+    # @nocommit this isn't necessary if we use one watchman server per test.
+    def tearDown(self):
+        self.unpauseWatchers()
+
+    # @nocommit deduplicate
+    def unpauseWatchers(self):
+        self.watchmanCommand("debug-unpause-watchers")
 
     def test_defer_state(self):
         root = self.mkdtemp()

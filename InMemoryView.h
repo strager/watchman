@@ -108,6 +108,9 @@ struct InMemoryView : public QueryableView {
 
   SCM* getSCM() const override;
 
+  static void debugPauseNotifyThreads();
+  static void debugUnpauseNotifyThreads();
+
  private:
   /* Holds the list head for files of a given suffix */
   struct file_list_head {
@@ -207,6 +210,7 @@ struct InMemoryView : public QueryableView {
       struct timeval now,
       bool recursive);
   void notifyThread(const std::shared_ptr<w_root_t>& root);
+  void debugWaitForUnpauseNotifyThreads();
   void ioThread(const std::shared_ptr<w_root_t>& root);
   bool handleShouldRecrawl(const std::shared_ptr<w_root_t>& root);
   void fullCrawl(
