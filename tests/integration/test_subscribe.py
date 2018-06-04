@@ -128,6 +128,7 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         )
 
     def test_multiple_state_enters_share_one_cookie_after_abort(self):
+        # @nocommit delete this?
         """
         Abort both state-enter cookies (by performing a full rescan after the
         cookie is created but before the cookie is observed). After the cookie
@@ -145,6 +146,32 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
             [
                 {"name": "state1", "state": "Asserted"},
                 {"name": "state2", "state": "Asserted"},
+            ],
+        )
+        # @nocommit how can we verify that only one cookie was created?
+
+    # @nocommit rename
+    def test_multiple_state_enters_share_one_cookie_after_abort_2(self):
+        root = self.mkdtemp()
+        self.watchmanCommand("watch", root)
+        self.watchmanCommand("clock", root, {"sync_timeout": 1000}) # @nocommit factor
+
+        self.pauseWatchers()
+        self.watchmanCommand("state-enter", root, "teststate1")
+        self.watchmanCommand("state-enter", root, "teststate2")
+        self.watchmanCommand("debug-abort-cookies", root)
+        # @nocommit HACK wait for abort-cookies to kill state-enter's cookie
+        # @nocommit is this necessary? I think not...
+        time.sleep(0.5)
+
+        # @nocommit document
+        self.assertWaitForAssertedStates(root, [{"name": "teststate1", "state": "PendingEnter"}, {"name": "teststate2", "state": "PendingEnter"}], "state-enter should not have seen the cookie yet")
+        self.unpauseWatchers()
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "teststate1", "state": "Asserted"},
+                {"name": "teststate2", "state": "Asserted"},
             ],
         )
         # @nocommit how can we verify that only one cookie was created?
