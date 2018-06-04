@@ -85,7 +85,7 @@ void CookieSync::syncToNow(std::chrono::milliseconds timeout) {
   using namespace std::chrono;
   auto deadline = system_clock::now() + timeout;
 
-  //while (true) {
+  while (true) {
     auto cookie = sync();
 
     if (!cookie.wait_for(timeout)) {
@@ -106,10 +106,10 @@ void CookieSync::syncToNow(std::chrono::milliseconds timeout) {
     // Sync was aborted by a recrawl; recompute the timeout
     // and wait again if we still have time
     timeout = duration_cast<milliseconds>(deadline - system_clock::now());
-    //if (timeout.count() <= 0) {
+    if (timeout.count() <= 0) {
       cookie.result().throwIfError();
-    //}
-  //}
+    }
+  }
 }
 
 void CookieSync::abortAllCookies() {
