@@ -169,45 +169,12 @@ bool ClientStateAssertions::isStateAsserted(w_string stateName) const {
 
 } // namespace watchman
 
-static void cmd_state_enter(
-    struct watchman_client* clientbase,
-    const json_ref& args) {
-  struct state_arg parsed;
-  auto client = dynamic_cast<watchman_user_client*>(clientbase);
-
-  auto root = resolveRoot(client, args);
-
-  if (!parse_state_arg(client, args, &parsed)) {
-    return;
-  }
-
-  if (client->states.find(parsed.name) != client->states.end()) {
-    send_error_response(
-        client, "state %s is already asserted", parsed.name.c_str());
-    return;
-  }
-
-  auto assertion = std::make_shared<ClientStateAssertion>(root, parsed.name);
-
-  // Ask the root to track the assertion and maintain ordering.
-  // This will throw if the state is already asserted or pending assertion
-  // so we do this prior to linking it in to the client.
-  root->assertedStates.wlock()->queueAssertion(assertion);
-
-  // Increment state transition counter for this root
-  root->stateTransCount++;
-  // Record the state assertion in the client
-  client->states[parsed.name] = assertion;
-
-  // We successfully entered the state, this is our response to the
-  // state-enter command.  We do this before we send the subscription
-  // PDUs in case CLIENT has active subscriptions for this root
-  auto response = make_response();
-
-  response.set({{"root", w_string_to_json(root->root_path)},
-                {"state-enter", w_string_to_json(parsed.name)}});
-  send_and_dispose_response(client, std::move(response));
-
+namespace {
+void syncStateEnterAsync(
+    std::shared_ptr<ClientStateAssertion> assertion,
+    state_arg parsed, // @nocommit simplify or rename
+    std::shared_ptr<w_root_t> root // @nocommit drop; we can get this from assertion
+) {
   root->cookies
       .sync()
       // Note that it is possible that the sync()
@@ -253,6 +220,49 @@ static void cmd_state_enter(
           }
         }
       });
+}
+}
+
+static void cmd_state_enter(
+    struct watchman_client* clientbase,
+    const json_ref& args) {
+  struct state_arg parsed;
+  auto client = dynamic_cast<watchman_user_client*>(clientbase);
+
+  auto root = resolveRoot(client, args);
+
+  if (!parse_state_arg(client, args, &parsed)) {
+    return;
+  }
+
+  if (client->states.find(parsed.name) != client->states.end()) {
+    send_error_response(
+        client, "state %s is already asserted", parsed.name.c_str());
+    return;
+  }
+
+  auto assertion = std::make_shared<ClientStateAssertion>(root, parsed.name);
+
+  // Ask the root to track the assertion and maintain ordering.
+  // This will throw if the state is already asserted or pending assertion
+  // so we do this prior to linking it in to the client.
+  root->assertedStates.wlock()->queueAssertion(assertion);
+
+  // Increment state transition counter for this root
+  root->stateTransCount++;
+  // Record the state assertion in the client
+  client->states[parsed.name] = assertion;
+
+  // We successfully entered the state, this is our response to the
+  // state-enter command.  We do this before we send the subscription
+  // PDUs in case CLIENT has active subscriptions for this root
+  auto response = make_response();
+
+  response.set({{"root", w_string_to_json(root->root_path)},
+                {"state-enter", w_string_to_json(parsed.name)}});
+  send_and_dispose_response(client, std::move(response));
+
+  syncStateEnterAsync(std::move(assertion), std::move(parsed), std::move(root));
 }
 W_CMD_REG("state-enter", cmd_state_enter, CMD_DAEMON, w_cmd_realpath_root)
 
