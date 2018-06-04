@@ -186,9 +186,11 @@ void syncStateEnterAsync(
                 watchman::Result<watchman::Unit>&& result) {
         try {
           result.throwIfError();
+#if 0
         } catch (CookieSyncAborted&) {
           syncStateEnterAsync(std::move(assertion), std::move(parsed), std::move(root));
           return;
+#endif
         } catch (const std::exception& exc) {
           // The sync failed for whatever reason; log it.
           log(ERR, "state-enter sync failed: ", exc.what(), "\n");

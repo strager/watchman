@@ -107,13 +107,19 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         should still be broadcast.
         """
         root = self.mkdtemp()
+        # @nocommit test with initial watch unpaused instead.
         self.pauseWatchers()
         self.watchmanCommand("watch", root)
 
         self.watchmanCommand("state-enter", root, "teststate")
+        # @nocommit FIXME(strager): This doesn't abort the cookie. Recrawl will
+        # see and notify the cookie, defeating the purpose of this test.
+        self.watchmanCommand("debug-recrawl", root)
+        # @nocommit HACK wait for recrawl to kill state-enter's cookie
+        import time
+        time.sleep(0.5)
         self.unpauseWatchers()
-        # @nocommit how can we tickle the cookies into being aborted? can we
-        # pause inotify?
+
         self.assertWaitForAssertedStates(
             root,
             [
