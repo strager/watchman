@@ -202,7 +202,7 @@ W_CMD_REG(
     w_cmd_realpath_root)
 
 static void cmd_debug_pause_watchers(
-    struct watchman_client* clientbase,
+    struct watchman_client* clientbase, // @nocommit rename
     const json_ref&) {
   watchman::InMemoryView::debugPauseNotifyThreads();
   // @nocommit should we block waiting for the watchers to
@@ -218,7 +218,7 @@ W_CMD_REG(
     nullptr)
 
 static void cmd_debug_unpause_watchers(
-    struct watchman_client* clientbase,
+    struct watchman_client* clientbase, // @nocommit rename
     const json_ref&) {
   watchman::InMemoryView::debugUnpauseNotifyThreads();
   auto response = make_response();
@@ -230,6 +230,24 @@ W_CMD_REG(
     cmd_debug_unpause_watchers,
     CMD_DAEMON,
     nullptr)
+
+static void cmd_debug_abort_cookies(
+    struct watchman_client* client,
+    const json_ref& args) {
+  auto root = resolveRoot(client, args);
+
+  // @nocommit locking???
+  root->cookies.abortAllCookies();
+
+  auto response = make_response();
+  response.set("abort", json_true()); // @nocommit untested
+  send_and_dispose_response(client, std::move(response));
+}
+W_CMD_REG(
+    "debug-abort-cookies",
+    cmd_debug_abort_cookies,
+    CMD_DAEMON,
+    w_cmd_realpath_root)
 
 /* vim:ts=2:sw=2:et:
  */
