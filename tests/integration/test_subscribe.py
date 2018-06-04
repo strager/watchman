@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 import json
 import os
 import os.path
+import time
 
 import pywatchman
 import WatchmanTestCase
@@ -45,7 +46,7 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
                 return sub
         return None
 
-    def assertWaitForAssertedStates(self, root, states):
+    def assertWaitForAssertedStates(self, root, states, message=None):
         def sortStates(states):
             """ Deterministically sort the states for comparison.
             We sort by name and rely on the sort being stable as the
@@ -59,7 +60,7 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
             res = self.watchmanCommand("debug-get-asserted-states", root)
             return sortStates(res["states"])
 
-        self.assertWaitForEqual(states, getStates)
+        self.assertWaitForEqual(states, getStates, message=message)
 
     def test_state_enter_leave_one(self):
         root = self.mkdtemp()
@@ -100,24 +101,24 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         self.watchmanCommand("state-leave", root, "bar")
         self.assertWaitForAssertedStates(root, [])
 
-    def test_state_enter_works_with_recrawl(self):
+    # @nocommit make a similar test but with state-leave
+    def test_state_enter_works_after_aborted_cookie(self):
         """
-        @nocommit these docs are outdated
-        Abort the state-enter cookie (by performing a full rescan after the
-        cookie is created but before the cookie is observed). The state-enter
-        should still be broadcast.
+        If the state-enter cookie is aborted, the state-enter should still be
+        broadcast.
         """
         root = self.mkdtemp()
-        # @nocommit test with initial watch unpaused instead.
-        self.pauseWatchers()
         self.watchmanCommand("watch", root)
+        self.watchmanCommand("clock", root, {"sync_timeout": 1000}) # @nocommit factor
 
+        self.pauseWatchers()
         self.watchmanCommand("state-enter", root, "teststate")
         self.watchmanCommand("debug-abort-cookies", root)
         # @nocommit HACK wait for abort-cookies to kill state-enter's cookie
-        import time
+        # @nocommit is this necessary? I think not...
         time.sleep(0.5)
 
+        self.assertWaitForAssertedStates(root, [{"name": "teststate", "state": "PendingEnter"}], "state-enter should not have seen the cookie yet")
         self.unpauseWatchers()
         self.assertWaitForAssertedStates(
             root,
@@ -125,8 +126,6 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
                 {"name": "teststate", "state": "Asserted"},
             ],
         )
-        # @nocommit we should verify that the cookie is used (and that the state
-        # isn't entered immediately)
 
     def test_multiple_state_enters_share_one_cookie_after_abort(self):
         """
