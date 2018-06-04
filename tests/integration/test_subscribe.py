@@ -100,6 +100,49 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         self.watchmanCommand("state-leave", root, "bar")
         self.assertWaitForAssertedStates(root, [])
 
+    def test_state_enter_works_with_recrawl(self):
+        """
+        Abort the state-enter cookie (by performing a full rescan after the
+        cookie is created but before the cookie is observed). The state-enter
+        should still be broadcast.
+        """
+        root = self.mkdtemp()
+        self.watchmanCommand("watch", root)
+
+        self.watchmanCommand("state-enter", root, "teststate")
+        # @nocommit how can we tickle the cookies into being aborted? can we
+        # pause inotify?
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "teststate", "state": "Asserted"},
+            ],
+        )
+        # @nocommit we should verify that the cookie is used (and that the state
+        # isn't entered immediately)
+
+    def test_multiple_state_enters_share_one_cookie_after_abort(self):
+        """
+        Abort both state-enter cookies (by performing a full rescan after the
+        cookie is created but before the cookie is observed). After the cookie
+        is aborted, only one cookie should be created for both state-enters.
+        """
+        root = self.mkdtemp()
+        self.watchmanCommand("watch", root)
+
+        self.watchmanCommand("state-enter", root, "state1")
+        self.watchmanCommand("state-enter", root, "state2")
+        # @nocommit how can we tickle the cookies into being aborted? can we
+        # pause inotify?
+        self.assertWaitForAssertedStates(
+            root,
+            [
+                {"name": "state1", "state": "Asserted"},
+                {"name": "state2", "state": "Asserted"},
+            ],
+        )
+        # @nocommit how can we verify that only one cookie was created?
+
     def test_defer_state(self):
         root = self.mkdtemp()
         self.watchmanCommand("watch", root)
