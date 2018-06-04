@@ -102,6 +102,7 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
 
     def test_state_enter_works_with_recrawl(self):
         """
+        @nocommit these docs are outdated
         Abort the state-enter cookie (by performing a full rescan after the
         cookie is created but before the cookie is observed). The state-enter
         should still be broadcast.
@@ -112,14 +113,12 @@ class TestSubscribe(WatchmanTestCase.WatchmanTestCase):
         self.watchmanCommand("watch", root)
 
         self.watchmanCommand("state-enter", root, "teststate")
-        # @nocommit FIXME(strager): This doesn't abort the cookie. Recrawl will
-        # see and notify the cookie, defeating the purpose of this test.
-        self.watchmanCommand("debug-recrawl", root)
-        # @nocommit HACK wait for recrawl to kill state-enter's cookie
+        self.watchmanCommand("debug-abort-cookies", root)
+        # @nocommit HACK wait for abort-cookies to kill state-enter's cookie
         import time
         time.sleep(0.5)
-        self.unpauseWatchers()
 
+        self.unpauseWatchers()
         self.assertWaitForAssertedStates(
             root,
             [

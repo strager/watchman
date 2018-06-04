@@ -64,7 +64,7 @@ class TestAbortCookies(WatchmanTestCase.WatchmanTestCase):
         def abort_cookies_thread():
             time.sleep(1)
             abort_cookies_thread_client.query("debug-abort-cookies", root)
-            time.sleep(1)
+            time.sleep(1) # @nocommit I think this is necessary. Justify it.
             abort_cookies_thread_client.query("debug-recrawl", root)
 
         run_functions_in_threads_and_join([
